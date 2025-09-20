@@ -59,13 +59,7 @@ async def on_message(message):
     await asyncio.sleep(6)
     await message.author.send("Time up queen :3") #works for both dms and in server
 
-    
 
-    
-# @client.command()
-# async def pomodoro_message(ctx):
-#     await asyncio.sleep (5)
-#     await ctx.author.send("Time Up")
 
 
 client.run(TOKEN)

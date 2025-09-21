@@ -47,13 +47,29 @@ async def on_member_join(member):
         print("Something went wrong.")
 
 
- 
+def make_sleep():
+    async def sleep(delay, result=None, *, loop=None):
+            coro = asyncio.sleep(delay, result=result, loop=loop)
+            task = asyncio.ensure_future(coro)
+            sleep.tasks.add(task)
+            try:
+                return await task
+            except asyncio.CancelledError:
+                return result
+            finally:
+                sleep.tasks.remove(task)
+
+    sleep.tasks = set()
+    sleep.cancel_all = lambda: sum(task.cancel() for task in sleep.tasks)
+    return sleep
+
 class Buttons(discord.ui.View):
+    
     def disable_all_items(self):  #disabled both buttons after one is clicked
         for item in self.children:
-            if isinstance(item, discord.ui.Button):
+            if isinstance(item, discord.ui.Button) and item.label != "Cancel Timer":
                 item.disabled = True
-   
+
    
     def __init__(self, *, timeout=180):
         super().__init__(timeout=timeout)
@@ -64,7 +80,7 @@ class Buttons(discord.ui.View):
         self.disable_all_items()
         await interaction.response.edit_message(view=self)
         await interaction.user.send("25 mins start now")
-        await asyncio.sleep(5)
+        await sleep(5)
         await interaction.followup.send(content="Time up queen :3")  
    
     #buttton 50
@@ -72,10 +88,17 @@ class Buttons(discord.ui.View):
     async def blurple_button(self,interaction:discord.Interaction,button:discord.ui.Button):
         self.disable_all_items()
         await interaction.user.send("50 mins start now")
-        await asyncio.sleep(10)
+        await sleep(10)
         await interaction.followup.send(content = "Time up queen :3")  
-
-
+    
+    @discord.ui.button(label="Cancel Timer", style =discord.ButtonStyle.red)
+    async def cancel_button(self,interaction:discord.Interaction,button:discord.ui.Button):
+        sleep.cancel_all()
+        if sleep.tasks:
+            await asyncio.wait(sleep.tasks)
+        await interaction.response.send_message("You cancelled the timer booooooo loser")
+     
+        
 
 @client.command()
 async def button(ctx):
@@ -84,24 +107,8 @@ async def button(ctx):
     await ctx.send("Pick your time to study ",view=Buttons())
     
     
-    
-    
-   
-
-    
-
+sleep = make_sleep()
 
 
 client.run(TOKEN)
 
-
-# @client.listen('on_message')
-# async def on_message(message):  #works for dms only
-#     if message.author == client.user or isinstance(message.channel, discord.TextChannel): #to prevent loops and to prevent timers being started in the Guild
-#         return
-#     start_timer = "Your time starts now love! You got this!!" 
-    
-#     if "timer" in message.content.lower():
-#             await message.channel.send(start_timer)
-#             await asyncio.sleep(6)
-#             await message.author.send("Time up queen :3") 

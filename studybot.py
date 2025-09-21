@@ -17,7 +17,7 @@ GUILD = os.getenv('DISCORD_GUILD')
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True 
-client=commands.Bot(command_prefix=".", intents=intents)
+client=commands.Bot(command_prefix="/", intents=intents)
 
 
 @client.event
@@ -48,8 +48,8 @@ async def on_member_join(member):
 
 
 def make_sleep():
-    async def sleep(delay, result=None, *, loop=None):
-            coro = asyncio.sleep(delay, result=result, loop=loop)
+    async def sleep(delay, result=None):
+            coro = asyncio.sleep(delay, result=result)
             task = asyncio.ensure_future(coro)
             sleep.tasks.add(task)
             try:
@@ -81,7 +81,7 @@ class Buttons(discord.ui.View):
         await interaction.response.edit_message(view=self)
         await interaction.user.send("25 mins start now")
         await sleep(5)
-        await interaction.followup.send(content="Time up queen :3")  
+        await interaction.user.send(content="Time up queen :3")  
    
     #buttton 50
     @discord.ui.button(label="50 Minutes", style =discord.ButtonStyle.blurple)
@@ -91,20 +91,23 @@ class Buttons(discord.ui.View):
         await sleep(10)
         await interaction.followup.send(content = "Time up queen :3")  
     
+    #cancel button + stop timers
     @discord.ui.button(label="Cancel Timer", style =discord.ButtonStyle.red)
     async def cancel_button(self,interaction:discord.Interaction,button:discord.ui.Button):
-        sleep.cancel_all()
+        button.disabled = True   #diables button after pressed
+        await interaction.response.edit_message(view=self)
+        sleep.cancel_all()  #cancels running timers
         if sleep.tasks:
             await asyncio.wait(sleep.tasks)
-        await interaction.response.send_message("You cancelled the timer booooooo loser")
+        await interaction.user.send("You cancelled the timer booooooo loser")
      
         
 
 @client.command()
-async def button(ctx):
-    if ctx.author == client.user or isinstance(ctx.channel, discord.TextChannel): #to prevent loops and to prevent timers being started in the Guild
+async def pomodoro(ctx):
+    if ctx.author == client.user or isinstance(ctx.channel, discord.TextChannel): #to prevents bot responding to itself and to prevent timers being started in the Guild
         return
-    await ctx.send("Pick your time to study ",view=Buttons())
+    await ctx.send("Pick your study time ",view=Buttons())
     
     
 sleep = make_sleep()

@@ -1,34 +1,37 @@
-# bot.py
-import os
 import asyncio
-
+import os
 import discord
+from discord.ui import Button, View
+from discord.ext import commands
+from discord import app_commands
 from dotenv import load_dotenv
+
 
 #basic setup of bot
 load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
-GUILD= os.getenv('DISCORD_GUILD')
+TOKEN= os.getenv('DISCORD_TOKEN')
+GUILD_ID = int(os.getenv("GUILD_ID").strip())
+GUILD = os.getenv('DISCORD_GUILD')
+
 
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True 
+client=commands.Bot(command_prefix=".", intents=intents)
 
-client = discord.Client(intents = intents)
 
 @client.event
 async def on_ready():
     print(f'{client.user} has connected to Discord!')
-
     for guild in client.guilds:
         if guild.name == GUILD:
             break
-    
     print(
         f'{client.user} is connected to the following guild:\n'
+     
         f'{guild.name}(id: {guild.id})'
     )
-
+    
 
 @client.event #sending dm to a member on join
 async def on_member_join(member):
@@ -42,24 +45,30 @@ async def on_member_join(member):
     else:
         print("Something went wrong.")
 
+    
+class Buttons(discord.ui.View):
+    def __init__(self, *, timeout=180):
+        super().__init__(timeout=timeout)
+    @discord.ui.button(label="Button",style=discord.ButtonStyle.gray)
+    async def grey_button(self,interaction:discord.Interaction,button:discord.ui.Button,):
+        await interaction.response.send_message(content=f"Response!")
 
+@client.command()
+async def button(ctx):
+    await ctx.send("This message has buttons!",view=Buttons())\
 
-
-@client.event
-async def on_message(message):
+@client.listen('on_message')
+async def on_message(message):  #works for dms only
     if message.author == client.user or isinstance(message.channel, discord.TextChannel): #to prevent loops and to prevent timers being started in the Guild
         return
     start_timer = "Your time starts now love! You got this!!" 
     
     if "timer" in message.content.lower():
             await message.channel.send(start_timer)
-    
-    if message.author == client.user:
-        return
-    await asyncio.sleep(6)
-    await message.author.send("Time up queen :3") #works for both dms and in server
-
-
+            await asyncio.sleep(6)
+            await message.author.send("Time up queen :3") 
 
 
 client.run(TOKEN)
+
+

@@ -1,7 +1,7 @@
 import asyncio
 import os
 import discord
-from discord.ui import Button, View
+from discord.ui import Button
 from discord.ext import commands
 from discord import app_commands
 from dotenv import load_dotenv
@@ -31,7 +31,8 @@ async def on_ready():
      
         f'{guild.name}(id: {guild.id})'
     )
-    
+
+
 
 @client.event #sending dm to a member on join
 async def on_member_join(member):
@@ -45,30 +46,62 @@ async def on_member_join(member):
     else:
         print("Something went wrong.")
 
-    
+
+ 
 class Buttons(discord.ui.View):
+    def disable_all_items(self):  #disabled both buttons after one is clicked
+        for item in self.children:
+            if isinstance(item, discord.ui.Button):
+                item.disabled = True
+   
+   
     def __init__(self, *, timeout=180):
         super().__init__(timeout=timeout)
-    @discord.ui.button(label="Button",style=discord.ButtonStyle.gray)
-    async def grey_button(self,interaction:discord.Interaction,button:discord.ui.Button,):
-        await interaction.response.send_message(content=f"Response!")
+
+    #button 25
+    @discord.ui.button(label="25 Minutes",style=discord.ButtonStyle.gray)
+    async def grey_button(self,interaction:discord.Interaction,button:discord.Button,):
+        self.disable_all_items()
+        await interaction.response.edit_message(view=self)
+        await interaction.user.send("25 mins start now")
+        await asyncio.sleep(5)
+        await interaction.followup.send(content="Time up queen :3")  
+   
+    #buttton 50
+    @discord.ui.button(label="50 Minutes", style =discord.ButtonStyle.blurple)
+    async def blurple_button(self,interaction:discord.Interaction,button:discord.ui.Button):
+        self.disable_all_items()
+        await interaction.user.send("50 mins start now")
+        await asyncio.sleep(10)
+        await interaction.followup.send(content = "Time up queen :3")  
+
+
 
 @client.command()
 async def button(ctx):
-    await ctx.send("This message has buttons!",view=Buttons())\
-
-@client.listen('on_message')
-async def on_message(message):  #works for dms only
-    if message.author == client.user or isinstance(message.channel, discord.TextChannel): #to prevent loops and to prevent timers being started in the Guild
+    if ctx.author == client.user or isinstance(ctx.channel, discord.TextChannel): #to prevent loops and to prevent timers being started in the Guild
         return
-    start_timer = "Your time starts now love! You got this!!" 
+    await ctx.send("Pick your time to study ",view=Buttons())
     
-    if "timer" in message.content.lower():
-            await message.channel.send(start_timer)
-            await asyncio.sleep(6)
-            await message.author.send("Time up queen :3") 
+    
+    
+    
+   
+
+    
+
 
 
 client.run(TOKEN)
 
 
+# @client.listen('on_message')
+# async def on_message(message):  #works for dms only
+#     if message.author == client.user or isinstance(message.channel, discord.TextChannel): #to prevent loops and to prevent timers being started in the Guild
+#         return
+#     start_timer = "Your time starts now love! You got this!!" 
+    
+#     if "timer" in message.content.lower():
+#             await message.channel.send(start_timer)
+#             await asyncio.sleep(6)
+#             await message.author.send("Time up queen :3") 
